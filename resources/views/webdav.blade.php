@@ -1,10 +1,11 @@
-{{-- documentation is README.md at https://github.com/jkoop/laravel-webdav-blade --}}
+{{-- documentation is the example files at https://github.com/jkoop/laravel-webdav-blade --}}
+{{-- it's probably best to just accept this blade as magic and move on --}}
 {{-- yes, the indentation must be this bad... --}}
 <?xml version="1.0" encoding="utf-8"?>
 <D:multistatus xmlns:D="DAV:">
 @foreach ($files as $file)
 <D:response xmlns:lp1="DAV:" xmlns:lp2="http://apache.org/dav/props/">
-<D:href>/{{ trim($file['path'] ?? throw new \Exception('$file["path"] must be set'), '/') }}{{ $file['type'] == 'dir' ? '/' : '' }}</D:href> {{-- full path --}}
+<D:href>/{{ trim($file['path'] ?? throw new \Exception('$file["path"] must be set'), '/') }}{{ $file['type'] == 'dir' && trim($file['path'], '/') != '' ? '/' : '' }}</D:href> {{-- full path --}}
 <D:propstat>
 <D:prop>
 @if ($file['type'] == 'dir')
@@ -29,16 +30,6 @@
 @if ($file['type'] != 'dir' && isset($file['executable']))
 <lp2:executable>{{ $file['executable'] ? 'T' : 'F' }}</lp2:executable> {{-- T or F --}}
 @endif
-{{-- <D:supportedlock> // we don't support locking
-<D:lockentry>
-<D:lockscope><D:exclusive/></D:lockscope>
-<D:locktype><D:write/></D:locktype>
-</D:lockentry>
-<D:lockentry>
-<D:lockscope><D:shared/></D:lockscope>
-<D:locktype><D:write/></D:locktype>
-</D:lockentry>
-</D:supportedlock> --}}
 @if ($file['type'] == 'dir')
 <D:getcontenttype>httpd/unix-directory</D:getcontenttype> {{-- httpd/unix-directory for directory, else use mimetype --}}
 @elseif (isset($file['mimeType']))
@@ -47,7 +38,7 @@
 <D:getcontenttype>application/octet-stream</D:getcontenttype>
 @endif
 </D:prop>
-<D:status>HTTP/1.1 {{ ($file['readable'] ?? true) '200 OK' : '403 Forbidden' }}</D:status> {{-- 200 OK (or maybe 403 Forbidden); not every client is attentive --}}
+<D:status>HTTP/1.1 {{ ($file['readable'] ?? true) ? '200 OK' : '403 Forbidden' }}</D:status> {{-- 200 OK (or maybe 403 Forbidden); not every client is attentive --}}
 </D:propstat>
 </D:response>
 @endforeach

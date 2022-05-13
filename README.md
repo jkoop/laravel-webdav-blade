@@ -1,49 +1,16 @@
 # Laravel WebDAV Blade
 
-The WebDAV spec is a dumpster fire. Use this blade file to make your life easier.
+The WebDAV spec is a dumpster fire. Use this blade file (and example supporting files) to make your life easier.
+
+Tested with Laravel v9.12.2.
 
 ## Usage
 
-Example (tested with Laravel 9.x):
+I tried my best to make the supporting files as self-explanatory as possible. Please feel free to read them.
 
-```php
-$files = [
-    // a representative of the requested path must included in the response
-    {
-        // path is required; will be prepended with a slash if needed, dirs will automatically be appended with a slash if needed; default `throw new Exception`
-        'path' => url()->current(),
+## Some notes
 
-        // type is required and must be either 'dir' or 'file'; default 'file'
-        'type' => 'dir',
-
-        // creation date is optional and must be a DateTime* instance; default missing
-        'creationDate' => new DateTime('1970-01-01 0:00:00 UTC'),
-
-        // last modified date is optional and must be a DateTime* instance; default missing
-        'lastModifiedDate' => new DateTime('1970-01-01 0:00:00 UTC'),
-
-        // size in bytes is optional and must be an integer; ignored for dirs; default missing
-        'size' => 0,
-
-        // etag is optional and must be a string; will be automatically surrounded by quotes; default md5 of all properties
-        'etag' => md5(url()->current()),
-
-        // executable is optional and must be a boolean; ignored for dirs; default missing
-        'executable' => false,
-
-        // mime type is optional and must be a string; value will be 'application/x-directory' for dirs; default 'application/octet-stream' for files
-        'mimeType' => 'application/x-directory',
-
-        // readable is optional and must be a boolean; default true
-        'readable' => true,
-    },
-    ...
-];
-
-return view('path/to/webdav', [
-    'files' => $files,
-], 207)
-    ->header('Content-Type', 'text/xml');
-```
-
-\* DateTime includes Carbon
++ WebDAV uses the PROPFIND method to get information about a file or folder. It is a kind of POST request (with a body), but I'm ignoring it here because I can. The request body just specifies what properties to return; we just assume they want everything.
++ PROPFINDs must respond with a 207 Multi-Status response, or 401, 403, 404, etc.
++ Before making a PROPFIND request, the client will make an OPTIONS request to determine if the server supports WebDAV.
++ Headers are picky! You can't `return` from a Controller or Laravel will add headers like Cookie, etc. Instead, you must `exit()`.
